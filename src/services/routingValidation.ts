@@ -15,7 +15,7 @@ export interface RoutingValidationResult {
 }
 
 // Use local backend proxy to avoid CORS issues
-const API_BASE_URL = 'http://localhost:3001/api/routing';
+const API_BASE_URL = '/api/routing';
 
 /**
  * Validates the checksum of a routing number using the ABA algorithm

@@ -1,6 +1,6 @@
 import type { AchPaymentRequest, AchPaymentResult } from '../types';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 export async function submitAchPayment(
   request: AchPaymentRequest
