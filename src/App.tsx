@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { validateRoutingNumberAsync, submitAchPayment, type RoutingValidationResult } from './services';
 import type { AchAccountType, AchType, AchPaymentResult, TransactionEntry } from './types';
 import { ActivityLog, loadLog, appendToLog, clearLog } from './components/ActivityLog';
@@ -23,6 +23,7 @@ const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'nume
 type View = 'terminal' | 'activity';
 
 export function App() {
+  const routingValidationRequestId = useRef(0);
   const [view, setView] = useState<View>('terminal');
   const [txLog, setTxLog] = useState<TransactionEntry[]>(() => loadLog());
 
@@ -36,9 +37,12 @@ export function App() {
   const [amountDollars, setAmountDollars] = useState('');
   const [authorized, setAuthorized]       = useState(false);
   const [address1, setAddress1]           = useState('');
+  const [address2, setAddress2]           = useState('');
   const [city, setCity]                   = useState('');
   const [state, setState]                 = useState('');
   const [postalCode, setPostalCode]       = useState('');
+  const [checkNumber, setCheckNumber]     = useState('');
+  const [customIdentifier, setCustomIdentifier] = useState('');
 
   const [routingValidation, setRoutingValidation] = useState<RoutingValidationResult | null>(null);
   const [isValidating, setIsValidating]   = useState(false);
@@ -47,19 +51,51 @@ export function App() {
 
   useEffect(() => {
     const cleaned = routingNumber.replace(/[\s-]/g, '');
+    routingValidationRequestId.current += 1;
+    const requestId = routingValidationRequestId.current;
+
     if (cleaned.length < 9) {
       setRoutingValidation(null);
       setBankName('');
+      setIsValidating(false);
       return;
     }
+
     if (cleaned.length === 9) {
+      const controller = new AbortController();
       setIsValidating(true);
-      validateRoutingNumberAsync(cleaned)
+      setRoutingValidation(null);
+      validateRoutingNumberAsync(cleaned, controller.signal)
         .then((result) => {
+          if (requestId !== routingValidationRequestId.current) {
+            return;
+          }
           setRoutingValidation(result);
-          if (result.isValid && result.bankName) setBankName(result.bankName);
+          if (result.isValid && result.bankName) {
+            setBankName(result.bankName);
+            return;
+          }
+          setBankName('');
         })
-        .finally(() => setIsValidating(false));
+        .catch((error: unknown) => {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return;
+          }
+          setRoutingValidation({
+            isValid: false,
+            error: 'Unable to verify routing number right now. Please try again.',
+          });
+          setBankName('');
+        })
+        .finally(() => {
+          if (requestId === routingValidationRequestId.current) {
+            setIsValidating(false);
+          }
+        });
+
+      return () => {
+        controller.abort();
+      };
     }
   }, [routingNumber]);
 
@@ -74,7 +110,9 @@ export function App() {
     accountType !== '' &&
     amountDollars.trim() !== '' &&
     parseFloat(amountDollars) > 0 &&
-    postalCode.trim() !== '';
+    postalCode.trim() !== '' &&
+    checkNumber.trim() !== '' &&
+    customIdentifier.trim() !== '';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,9 +137,12 @@ export function App() {
         orderCode,
         description: 'Unicity Purchase',
         address1: address1.trim() || undefined,
+        address2: address2.trim() || undefined,
         city: city.trim() || undefined,
         state: state.trim() || undefined,
         postalCode: postalCode.trim(),
+        checkNumber: checkNumber.trim(),
+        customIdentifier: customIdentifier.trim(),
       });
 
       setPaymentResult(result);
@@ -140,7 +181,8 @@ export function App() {
     setPayerName(''); setEmail(''); setRoutingNumber(''); setBankName('');
     setAccountNumber(''); setAccountType(''); setAchType('TEL');
     setAmountDollars(''); setAuthorized(false);
-    setAddress1(''); setCity(''); setState(''); setPostalCode('');
+    setAddress1(''); setAddress2(''); setCity(''); setState(''); setPostalCode('');
+    setCheckNumber(''); setCustomIdentifier('');
     setRoutingValidation(null); setPaymentResult(null);
   }
 
@@ -296,6 +338,11 @@ export function App() {
                     <input id="address1" type="text" value={address1} onChange={(e) => setAddress1(e.target.value)} placeholder="123 Main St" />
                   </div>
 
+                  <div>
+                    <label htmlFor="address2">Address Line 2</label>
+                    <input id="address2" type="text" value={address2} onChange={(e) => setAddress2(e.target.value)} placeholder="Apartment, suite, or township" />
+                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
                     <div>
                       <label htmlFor="city">City</label>
@@ -310,6 +357,17 @@ export function App() {
                   <div>
                     <label htmlFor="postalCode">ZIP Code <span style={{ color: 'var(--color-error)' }}>*</span></label>
                     <input id="postalCode" type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="84097" inputMode="numeric" maxLength={5} required />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
+                    <div>
+                      <label htmlFor="checkNumber">Check Number <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                      <input id="checkNumber" type="text" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value.replace(/\D/g, ''))} placeholder="1104" inputMode="numeric" required />
+                    </div>
+                    <div>
+                      <label htmlFor="customIdentifier">Custom Identifier <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                      <input id="customIdentifier" type="text" value={customIdentifier} onChange={(e) => setCustomIdentifier(e.target.value)} placeholder="6549" required />
+                    </div>
                   </div>
                 </div>
               </form>
@@ -336,6 +394,8 @@ export function App() {
                     <SummaryRow label="Account"      value={accountNumber ? `****${accountNumber.slice(-4)}` : '—'} />
                     <SummaryRow label="Account Type" value={formatAccountType(accountType)} />
                     <SummaryRow label="eCheck Type"  value={achType} />
+                    <SummaryRow label="Check #"      value={checkNumber || '—'} />
+                    <SummaryRow label="Custom ID"    value={customIdentifier || '—'} />
                     <SummaryRow label="Date"         value={today} />
                   </dl>
                 </div>
@@ -373,6 +433,12 @@ export function App() {
                     {paymentResult && !paymentResult.success && (
                       <div style={styles.errorBanner}>
                         {paymentResult.error || `Payment ${paymentResult.status?.toLowerCase() ?? 'failed'}. Please verify details and try again.`}
+                        {(paymentResult.processorCode || paymentResult.processorMessage) && (
+                          <div style={styles.errorDetail}>
+                            {paymentResult.processorCode ? `Processor code: ${paymentResult.processorCode}` : 'Processor detail available'}
+                            {paymentResult.processorMessage ? ` - ${paymentResult.processorMessage}` : ''}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -499,5 +565,10 @@ const styles = {
     borderRadius: 'var(--radius-md)',
     fontSize: '20px',
     color: 'var(--color-error)',
+  },
+  errorDetail: {
+    marginTop: 'var(--spacing-2)',
+    fontSize: '16px',
+    color: 'var(--color-neutral-700)',
   },
 };

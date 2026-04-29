@@ -75,7 +75,8 @@ export function validateRoutingNumber(routingNumber: string): RoutingValidationR
  * Returns bank name, city, and state if valid
  */
 export async function validateRoutingNumberAsync(
-  routingNumber: string
+  routingNumber: string,
+  signal?: AbortSignal
 ): Promise<RoutingValidationResult> {
   const cleaned = routingNumber.replace(/[\s-]/g, '');
 
@@ -104,19 +105,22 @@ export async function validateRoutingNumberAsync(
 
   // Call the backend proxy API
   try {
-    const response = await fetch(`${API_BASE_URL}/${cleaned}`);
+    const response = await fetch(`${API_BASE_URL}/${cleaned}`, { signal });
     const data: RoutingValidationResult = await response.json();
 
     // Backend already returns the correct format
     return data;
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error;
+    }
+
     // Network error or API unavailable
     console.error('Routing validation API error:', error);
 
-    // Fallback: return valid based on checksum only
     return {
-      isValid: true,
-      error: 'Unable to verify bank name. Please confirm the routing number is correct.',
+      isValid: false,
+      error: 'Unable to verify routing number right now. Please try again.',
     };
   }
 }

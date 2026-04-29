@@ -18,9 +18,12 @@ export interface AchPaymentRequest {
   description: string;
   // Billing address — postalCode and countryCode required by WorldPay DTD
   address1?: string;
+  address2?: string;
   city?: string;
   state?: string;
   postalCode: string;
+  checkNumber: string;
+  customIdentifier: string;
 }
 
 export type PaymentStatus = 'AUTHORISED' | 'REFUSED' | 'ERROR' | 'CANCELLED';
@@ -31,4 +34,6 @@ export interface AchPaymentResult {
   orderCode?: string;
   authorisationId?: string;
   error?: string;
+  processorCode?: string;
+  processorMessage?: string;
 }
