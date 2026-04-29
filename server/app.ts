@@ -455,6 +455,7 @@ app.post('/api/payment/ach', async (req, res) => {
 
     const responseText = await wpResponse.text();
     console.log(`[WorldPay] Response status: ${wpResponse.status}`);
+    console.log(`[WorldPay] Raw response:\n${responseText}`);
 
     if (!wpResponse.ok) {
       console.error('[WorldPay] HTTP error status:', wpResponse.status);

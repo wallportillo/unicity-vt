@@ -95,14 +95,6 @@ export async function validateRoutingNumberAsync(
     };
   }
 
-  // Validate checksum locally first to save API calls
-  if (!validateChecksum(cleaned)) {
-    return {
-      isValid: false,
-      error: 'Invalid routing number checksum',
-    };
-  }
-
   // Call the backend proxy API
   try {
     const response = await fetch(`${API_BASE_URL}/${cleaned}`, { signal });
