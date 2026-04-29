@@ -45,16 +45,6 @@ app.get('/api/routing/:routingNumber', async (req, res) => {
     return res.status(400).json({ isValid: false, error: 'Routing number must be exactly 9 digits' });
   }
 
-  const digits = routingNumber.split('').map(Number);
-  const sum =
-    3 * (digits[0] + digits[3] + digits[6]) +
-    7 * (digits[1] + digits[4] + digits[7]) +
-    (digits[2] + digits[5] + digits[8]);
-
-  if (sum % 10 !== 0) {
-    return res.status(400).json({ isValid: false, error: 'Invalid routing number checksum' });
-  }
-
   const cached = routingCache.get(routingNumber);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     console.log(`[Cache HIT] ${routingNumber}`);
