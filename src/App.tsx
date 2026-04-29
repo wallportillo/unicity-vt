@@ -105,7 +105,7 @@ export function App() {
     authorized &&
     payerName.trim() !== '' &&
     email.trim() !== '' &&
-    routingValidation?.isValid === true &&
+    /^\d{9}$/.test(routingNumber.replace(/[\s-]/g, '')) &&
     accountNumber.trim() !== '' &&
     accountType !== '' &&
     amountDollars.trim() !== '' &&
