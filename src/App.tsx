@@ -99,13 +99,13 @@ export function App() {
     }
   }, [routingNumber]);
 
-  const hasRoutingError = routingValidation && !routingValidation.isValid && routingValidation.error;
+  const hasRoutingError = routingValidation && !routingValidation.isValid && routingValidation.error && !/^\d{9}$/.test(routingNumber.replace(/[\s-]/g, ''));
 
   const isFormValid =
     authorized &&
     payerName.trim() !== '' &&
     email.trim() !== '' &&
-    /^\d{9}$/.test(routingNumber.replace(/[\s-]/g, '')) &&
+    routingValidation?.isValid === true &&
     accountNumber.trim() !== '' &&
     accountType !== '' &&
     amountDollars.trim() !== '' &&
@@ -202,7 +202,7 @@ export function App() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" /><path d="M8 12l3 3 5-5" />
               </svg>
-              <span className="card-title">Payment Authorised</span>
+              <span className="card-title">{paymentResult.status === 'CAPTURED' ? 'Payment Captured' : 'Payment Authorised'}</span>
             </div>
             <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-10)' }}>
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="1.5" style={{ marginBottom: 'var(--spacing-4)' }}>
