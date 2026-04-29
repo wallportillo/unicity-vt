@@ -10,7 +10,7 @@ export interface TransactionEntry {
   routingNumber: string;
   accountNumberLast4: string;
   orderCode: string;
-  status: 'AUTHORISED' | 'REFUSED' | 'ERROR' | 'CANCELLED';
+  status: 'AUTHORISED' | 'CAPTURED' | 'REFUSED' | 'ERROR' | 'CANCELLED';
   authorisationId?: string;
   errorMessage?: string;
   rawStatus?: string;

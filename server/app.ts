@@ -369,7 +369,7 @@ function parseWorldPayResponse(xml: string): { success: boolean; status?: string
   const errorMatch = xml.match(/<error[^>]*>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/error>/);
   const processorMessage = errorMatch?.[1]?.trim();
 
-  if (lastEvent === 'AUTHORISED') {
+  if (lastEvent === 'AUTHORISED' || lastEvent === 'CAPTURED') {
     return {
       success: true,
       status: lastEvent,

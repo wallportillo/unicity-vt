@@ -73,7 +73,7 @@ export function ActivityLog({ log, onClear }: Props) {
 // ── Transaction card ─────────────────────────────────────────────────────────
 
 function TransactionCard({ tx }: { tx: TransactionEntry }) {
-  const isSuccess = tx.status === 'AUTHORISED';
+  const isSuccess = tx.status === 'AUTHORISED' || tx.status === 'CAPTURED';
   const amountFormatted = (tx.amount / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const date = new Date(tx.timestamp);
   const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -154,7 +154,7 @@ function Field({ label, value, large, accent, mono }: {
 // ── Status icon ──────────────────────────────────────────────────────────────
 
 function StatusIcon({ status }: { status: TransactionEntry['status'] }) {
-  if (status === 'AUTHORISED') {
+  if (status === 'AUTHORISED' || status === 'CAPTURED') {
     return (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
         <circle cx="12" cy="12" r="10" /><path d="M8 12l3 3 5-5" />

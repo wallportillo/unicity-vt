@@ -26,7 +26,7 @@ export interface AchPaymentRequest {
   customIdentifier: string;
 }
 
-export type PaymentStatus = 'AUTHORISED' | 'REFUSED' | 'ERROR' | 'CANCELLED';
+export type PaymentStatus = 'AUTHORISED' | 'CAPTURED' | 'REFUSED' | 'ERROR' | 'CANCELLED';
 
 export interface AchPaymentResult {
   success: boolean;
