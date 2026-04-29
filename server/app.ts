@@ -76,13 +76,13 @@ app.get('/api/routing/:routingNumber', async (req, res) => {
     }
 
     if (apiData.status === 'error') {
-      return res.status(404).json({
-        isValid: false,
-        error: apiData.error?.message || 'Routing number does not match any banks in the USA',
+      return res.json({
+        isValid: true,
+        error: 'Bank not found — please confirm the routing number is correct.',
       });
     }
 
-    return res.status(404).json({ isValid: false, error: 'Routing number does not match any banks in the USA' });
+    return res.json({ isValid: true, error: 'Bank not found — please confirm the routing number is correct.' });
   } catch (error) {
     console.error('Routing API Error:', error);
     return res.status(500).json({ isValid: false, error: 'Unable to validate routing number. Please try again.' });
