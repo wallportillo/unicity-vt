@@ -1,3 +1,5 @@
+'use client';
+
 import type { TransactionEntry } from '../types';
 
 const STORAGE_KEY = 'unicity_tx_log';

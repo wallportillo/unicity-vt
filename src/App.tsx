@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { validateRoutingNumberAsync, submitAchPayment, type RoutingValidationResult } from './services';
 import type { AchAccountType, AchType, AchPaymentResult, TransactionEntry } from './types';
