@@ -2,16 +2,17 @@
 
 ## Overview
 
-A CSR-facing web tool for processing one-time ACH bank draft payments on behalf of customers over the phone. The CSR enters customer banking information, reads a scripted authorization to the customer, and submits the payment to WorldPay's WPG XML API.
+A CSR-facing web tool for processing one-time ACH bank draft payments on behalf of customers over the phone. Built with Next.js App Router — the React UI and API routes are served from the same deployment with no separate backend process.
 
 ```mermaid
 flowchart LR
     CSR -->|enters form| Terminal
-    Terminal -->|validates routing| BankLookup
-    Terminal -->|submits payment| Backend
-    Backend -->|ACH XML| WorldPay
-    WorldPay -->|CAPTURED / REFUSED| Backend
-    Backend --> Terminal
+    Terminal -->|GET /api/routing/:n| NextAPI
+    Terminal -->|POST /api/payment/ach| NextAPI
+    NextAPI -->|bank lookup| BankRoutingIO
+    NextAPI -->|ACH XML| WorldPay
+    WorldPay -->|CAPTURED / REFUSED| NextAPI
+    NextAPI --> Terminal
     Terminal -->|logs result| ActivityLog
 ```
 
@@ -88,7 +89,7 @@ flowchart LR
 3. **Covers B3, B4**: WorldPay test environment will return REFUSED with a decline reason
    - Check Activity tab → transaction appears with amber REFUSED badge and decline message
 
-4. **Covers B5**: Stop the backend server mid-test and submit
+4. **Covers B5**: Stop the Next.js dev server mid-test and submit
    - Confirm: Red banner appears with "Unable to reach payment processor" message; no order code generated
 
 5. **Covers B6**: Leave ZIP Code blank, fill everything else
