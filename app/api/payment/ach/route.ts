@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AchPaymentRequestBody {
-  payerName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   routingNumber: string;
   bankName: string;
@@ -13,12 +14,11 @@ interface AchPaymentRequestBody {
   amount: number;
   orderCode: string;
   description: string;
-  address1?: string;
+  address1: string;
   address2?: string;
-  city?: string;
+  city: string;
   state?: string;
   postalCode: string;
-  checkNumber: string;
   customIdentifier: string;
 }
 
@@ -60,13 +60,14 @@ function normalizeShopperIpAddress(request: NextRequest) {
 }
 
 function validateAchPaymentRequest(body: AchPaymentRequestBody): string | null {
-  if (!body.payerName || !body.routingNumber || !body.accountNumber || !body.accountType || !body.amount || !body.orderCode) {
+  if (!body.firstName || !body.lastName || !body.routingNumber || !body.accountNumber || !body.accountType || !body.amount || !body.orderCode) {
     return 'Missing required payment fields.';
   }
+  if (!body.address1.trim()) return 'Street address is required.';
+  if (!body.city.trim()) return 'City is required.';
   if (!/^\d{9}$/.test(body.routingNumber)) return 'Invalid routing number format.';
   if (!/^\d+$/.test(body.accountNumber)) return 'Invalid account number format.';
   if (!/^\d{5}$/.test(body.postalCode)) return 'Invalid ZIP code format.';
-  if (!/^\d+$/.test(body.checkNumber)) return 'Invalid check number format.';
   if (!body.customIdentifier.trim()) return 'Custom identifier is required.';
   if (!isPositiveInteger(body.amount)) return 'Amount must be a positive whole number of cents.';
   if (!['CHECKING', 'SAVINGS'].includes(body.accountType)) return 'Invalid account type.';
@@ -79,12 +80,8 @@ function buildWorldPayXml(
   body: AchPaymentRequestBody,
   metadata: WorldPayRequestMetadata,
 ): string {
-  const { payerName, email, routingNumber, accountNumber, accountType, amount, orderCode, description, address1, address2, city, state, postalCode, checkNumber, customIdentifier } = body;
+  const { firstName, lastName, email, routingNumber, accountNumber, accountType, amount, orderCode, description, address1, address2, city, state, postalCode, customIdentifier } = body;
   const { sessionId, shopperIpAddress, acceptHeader, userAgentHeader } = metadata;
-
-  const nameParts = payerName.trim().split(/\s+/);
-  const firstName = nameParts[0] ?? '';
-  const lastName = nameParts.slice(1).join(' ') || firstName;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN" "http://dtd.worldpay.com/paymentService_v1.dtd">
@@ -112,7 +109,6 @@ function buildWorldPayXml(
             <bankAccountType>${formatWorldPayAccountType(accountType)}</bankAccountType>
             <accountNumber>${escapeXml(accountNumber)}</accountNumber>
             <routingNumber>${escapeXml(routingNumber)}</routingNumber>
-            <checkNumber>${escapeXml(checkNumber)}</checkNumber>
             <customIdentifier>${escapeXml(customIdentifier)}</customIdentifier>
           </echeckSale>
         </ACH_DIRECT_DEBIT-SSL>

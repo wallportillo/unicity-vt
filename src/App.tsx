@@ -29,7 +29,8 @@ export function App() {
   const [view, setView] = useState<View>('terminal');
   const [txLog, setTxLog] = useState<TransactionEntry[]>(() => loadLog());
 
-  const [payerName, setPayerName]         = useState('');
+  const [firstName, setFirstName]         = useState('');
+  const [lastName, setLastName]           = useState('');
   const [email, setEmail]                 = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
   const [bankName, setBankName]           = useState('');
@@ -43,8 +44,9 @@ export function App() {
   const [city, setCity]                   = useState('');
   const [state, setState]                 = useState('');
   const [postalCode, setPostalCode]       = useState('');
-  const [checkNumber, setCheckNumber]     = useState('');
-  const [customIdentifier, setCustomIdentifier] = useState('');
+  const [customIdentifier, setCustomIdentifier] = useState(() =>
+    `ACH-${String(loadLog().length + 1).padStart(5, '0')}`
+  );
 
   const [routingValidation, setRoutingValidation] = useState<RoutingValidationResult | null>(null);
   const [isValidating, setIsValidating]   = useState(false);
@@ -105,15 +107,16 @@ export function App() {
 
   const isFormValid =
     authorized &&
-    payerName.trim() !== '' &&
+    firstName.trim() !== '' &&
+    lastName.trim() !== '' &&
     email.trim() !== '' &&
     routingValidation?.isValid === true &&
     accountNumber.trim() !== '' &&
     accountType !== '' &&
     amountDollars.trim() !== '' &&
-    parseFloat(amountDollars) > 0 &&
+    address1.trim() !== '' &&
+    city.trim() !== '' &&
     postalCode.trim() !== '' &&
-    checkNumber.trim() !== '' &&
     customIdentifier.trim() !== '';
 
   async function handleSubmit(e: React.FormEvent) {
@@ -128,7 +131,8 @@ export function App() {
 
     try {
       const result = await submitAchPayment({
-        payerName: payerName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim(),
         routingNumber,
         bankName,
@@ -138,12 +142,11 @@ export function App() {
         amount: amountCents,
         orderCode,
         description: 'Unicity Purchase',
-        address1: address1.trim() || undefined,
+        address1: address1.trim(),
         address2: address2.trim() || undefined,
-        city: city.trim() || undefined,
+        city: city.trim(),
         state: state.trim() || undefined,
         postalCode: postalCode.trim(),
-        checkNumber: checkNumber.trim(),
         customIdentifier: customIdentifier.trim(),
       });
 
@@ -153,7 +156,7 @@ export function App() {
       const entry: TransactionEntry = {
         id: orderCode,
         timestamp: new Date().toISOString(),
-        payerName: payerName.trim(),
+        payerName: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
         amount: amountCents,
         bankName,
@@ -180,11 +183,11 @@ export function App() {
   }
 
   function handleReset() {
-    setPayerName(''); setEmail(''); setRoutingNumber(''); setBankName('');
+    setFirstName(''); setLastName(''); setEmail(''); setRoutingNumber(''); setBankName('');
     setAccountNumber(''); setAccountType(''); setAchType('TEL');
     setAmountDollars(''); setAuthorized(false);
     setAddress1(''); setAddress2(''); setCity(''); setState(''); setPostalCode('');
-    setCheckNumber(''); setCustomIdentifier('');
+    setCustomIdentifier(`ACH-${String(loadLog().length + 1).padStart(5, '0')}`);
     setRoutingValidation(null); setPaymentResult(null);
   }
 
@@ -210,7 +213,7 @@ export function App() {
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="1.5" style={{ marginBottom: 'var(--spacing-4)' }}>
                 <circle cx="12" cy="12" r="10" /><path d="M8 12l3 3 5-5" />
               </svg>
-              <h2 style={{ color: 'var(--color-primary-900)', marginBottom: 'var(--spacing-2)' }}>{payerName}</h2>
+              <h2 style={{ color: 'var(--color-primary-900)', marginBottom: 'var(--spacing-2)' }}>{firstName} {lastName}</h2>
               <p style={{ fontSize: '30px', fontWeight: 700, color: 'var(--color-primary-900)', marginBottom: 'var(--spacing-1)' }}>
                 {formatAmount(amountDollars)}
               </p>
@@ -258,9 +261,15 @@ export function App() {
               </div>
 
               <form id="ach-form" onSubmit={handleSubmit} className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-                <div>
-                  <label htmlFor="payerName">Payer Name</label>
-                  <input id="payerName" type="text" value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Full name as it appears on bank account" required />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
+                  <div>
+                    <label htmlFor="firstName">First Name <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                    <input id="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" required />
+                  </div>
+                  <div>
+                    <label htmlFor="lastName">Last Name <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                    <input id="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Johnson" required />
+                  </div>
                 </div>
 
                 <div>
@@ -336,8 +345,8 @@ export function App() {
                   <p style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-neutral-600)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Billing Address</p>
 
                   <div>
-                    <label htmlFor="address1">Street Address</label>
-                    <input id="address1" type="text" value={address1} onChange={(e) => setAddress1(e.target.value)} placeholder="123 Main St" />
+                    <label htmlFor="address1">Street Address <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                    <input id="address1" type="text" value={address1} onChange={(e) => setAddress1(e.target.value)} placeholder="123 Main St" required />
                   </div>
 
                   <div>
@@ -347,8 +356,8 @@ export function App() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
                     <div>
-                      <label htmlFor="city">City</label>
-                      <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
+                      <label htmlFor="city">City <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                      <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" required />
                     </div>
                     <div>
                       <label htmlFor="state">State</label>
@@ -361,15 +370,10 @@ export function App() {
                     <input id="postalCode" type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="84097" inputMode="numeric" maxLength={5} required />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
-                    <div>
-                      <label htmlFor="checkNumber">Check Number <span style={{ color: 'var(--color-error)' }}>*</span></label>
-                      <input id="checkNumber" type="text" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value.replace(/\D/g, ''))} placeholder="1104" inputMode="numeric" required />
-                    </div>
-                    <div>
-                      <label htmlFor="customIdentifier">Custom Identifier <span style={{ color: 'var(--color-error)' }}>*</span></label>
-                      <input id="customIdentifier" type="text" value={customIdentifier} onChange={(e) => setCustomIdentifier(e.target.value)} placeholder="6549" required />
-                    </div>
+                  <div>
+                    <label htmlFor="customIdentifier">Custom Identifier <span style={{ color: 'var(--color-error)' }}>*</span></label>
+                    <input id="customIdentifier" type="text" value={customIdentifier} onChange={(e) => setCustomIdentifier(e.target.value)} placeholder="ACH-00001" required />
+                    <p style={styles.hint}>Auto-generated — edit if needed</p>
                   </div>
                 </div>
               </form>
@@ -388,7 +392,8 @@ export function App() {
                 </div>
                 <div className="card-body">
                   <dl style={styles.summaryGrid}>
-                    <SummaryRow label="Customer"    value={payerName || '—'} />
+                    <SummaryRow label="First Name"   value={firstName || '—'} />
+                    <SummaryRow label="Last Name"    value={lastName || '—'} />
                     <SummaryRow label="Email"        value={email || '—'} />
                     <SummaryRow label="Amount"       value={amountDollars ? formatAmount(amountDollars) : '—'} highlight />
                     <SummaryRow label="Bank"         value={bankName || '—'} />
@@ -396,7 +401,6 @@ export function App() {
                     <SummaryRow label="Account"      value={accountNumber ? `****${accountNumber.slice(-4)}` : '—'} />
                     <SummaryRow label="Account Type" value={formatAccountType(accountType)} />
                     <SummaryRow label="eCheck Type"  value={achType} />
-                    <SummaryRow label="Check #"      value={checkNumber || '—'} />
                     <SummaryRow label="Custom ID"    value={customIdentifier || '—'} />
                     <SummaryRow label="Date"         value={today} />
                   </dl>
@@ -413,7 +417,7 @@ export function App() {
                 <div className="card-body">
                   <div style={{ fontSize: 'var(--text-base)', lineHeight: 1.75, color: 'var(--color-neutral-700)' }}>
                     <p style={{ marginBottom: 'var(--spacing-4)' }}>
-                      "To confirm your order, I understand that you, <Highlight>{payerName || '___'}</Highlight>, authorize Unicity International to make a one-time charge of <Highlight>{amountDollars ? formatAmount(amountDollars) : '___'}</Highlight> to your <Highlight>{formatAccountType(accountType)}</Highlight> account today, <Highlight>{today}</Highlight>. You are also authorizing that this information is saved for faster checkout on future purchases to your account.
+                      "To confirm your order, I understand that you, <Highlight>{firstName && lastName ? `${firstName} ${lastName}` : '___'}</Highlight>, authorize Unicity International to make a one-time charge of <Highlight>{amountDollars ? formatAmount(amountDollars) : '___'}</Highlight> to your <Highlight>{formatAccountType(accountType)}</Highlight> account today, <Highlight>{today}</Highlight>. You are also authorizing that this information is saved for faster checkout on future purchases to your account.
                     </p>
                     <p style={{ marginBottom: 'var(--spacing-4)' }}>
                       The total amount for this transaction is <Highlight>{amountDollars ? formatAmount(amountDollars) : '___'}</Highlight> on the bank information you provided: <Highlight>{bankName || '___'}</Highlight>, Routing Number <Highlight>{routingNumber || '___'}</Highlight>, Account Type <Highlight>{formatAccountType(accountType)}</Highlight>, Account Number <Highlight>{accountNumber ? `****${accountNumber.slice(-4)}` : '___'}</Highlight>.

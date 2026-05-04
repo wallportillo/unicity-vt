@@ -6,7 +6,8 @@ export type AchAccountType = 'CHECKING' | 'SAVINGS';
 export type AchType = 'TEL' | 'PPD' | 'CCD' | 'WEB';
 
 export interface AchPaymentRequest {
-  payerName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   routingNumber: string;
   bankName: string;
@@ -16,13 +17,11 @@ export interface AchPaymentRequest {
   amount: number; // in cents (e.g. 1000 = $10.00)
   orderCode: string;
   description: string;
-  // Billing address — postalCode and countryCode required by WorldPay DTD
-  address1?: string;
+  address1: string;
   address2?: string;
-  city?: string;
+  city: string;
   state?: string;
   postalCode: string;
-  checkNumber: string;
   customIdentifier: string;
 }
 
