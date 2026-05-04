@@ -5,10 +5,6 @@ import { validateRoutingNumberAsync, submitAchPayment, type RoutingValidationRes
 import type { AchAccountType, AchType, AchPaymentResult, TransactionEntry } from './types';
 import { ActivityLog, loadLog, appendToLog, clearLog } from './components/ActivityLog';
 
-function generateOrderCode(): string {
-  return `ACH-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-}
-
 function formatAmount(dollars: string): string {
   const n = parseFloat(dollars);
   if (isNaN(n)) return '—';
@@ -45,6 +41,9 @@ export function App() {
   const [state, setState]                 = useState('');
   const [postalCode, setPostalCode]       = useState('');
   const [customIdentifier, setCustomIdentifier] = useState(() =>
+    `ACH-${String(loadLog().length + 1).padStart(5, '0')}`
+  );
+  const [orderCode, setOrderCode] = useState(() =>
     `ACH-${String(loadLog().length + 1).padStart(5, '0')}`
   );
 
@@ -126,7 +125,6 @@ export function App() {
     setIsSubmitting(true);
     setPaymentResult(null);
 
-    const orderCode = generateOrderCode();
     const amountCents = Math.round(parseFloat(amountDollars) * 100);
 
     try {
@@ -187,7 +185,9 @@ export function App() {
     setAccountNumber(''); setAccountType(''); setAchType('TEL');
     setAmountDollars(''); setAuthorized(false);
     setAddress1(''); setAddress2(''); setCity(''); setState(''); setPostalCode('');
-    setCustomIdentifier(`ACH-${String(loadLog().length + 1).padStart(5, '0')}`);
+    const nextSeq = `ACH-${String(loadLog().length + 1).padStart(5, '0')}`;
+    setCustomIdentifier(nextSeq);
+    setOrderCode(nextSeq);
     setRoutingValidation(null); setPaymentResult(null);
   }
 
@@ -402,6 +402,7 @@ export function App() {
                     <SummaryRow label="Account Type" value={formatAccountType(accountType)} />
                     <SummaryRow label="eCheck Type"  value={achType} />
                     <SummaryRow label="Custom ID"    value={customIdentifier || '—'} />
+                    <SummaryRow label="Order Code"   value={orderCode} />
                     <SummaryRow label="Date"         value={today} />
                   </dl>
                 </div>
